@@ -1,0 +1,157 @@
+/*-- scss:defaults --*/
+
+$navy:      #0D2240;
+$teal:      #0E7490;
+$lt-teal:   #CFFAFE;
+$gold:      #CA8A04;
+$white:     #FFFFFF;
+$off-white: #F8FAFC;
+$slate:     #475569;
+$slate-l:   #94A3B8;
+
+$font-family-sans-serif: "Calibri", "Trebuchet MS", Arial, sans-serif;
+$presentation-font-size-root: 36px;
+$body-bg: $off-white;
+$body-color: $navy;
+$link-color: $teal;
+$presentation-heading-color: $navy;
+$presentation-heading-font-weight: 800;
+
+/*-- scss:rules --*/
+
+#title-slide p,
+#title-slide div {
+  color: #ffffff !important;
+}
+/* Title slide */
+.reveal .title-slide {
+  background-color: $navy !important;
+}
+.reveal .title-slide h1.title {
+  color: $white;
+  font-size: 1.8em;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.reveal .title-slide p.subtitle {
+  color: $lt-teal;
+  font-style: italic;
+  font-size: 0.9em;
+  margin-top: 0.4em;
+}
+.reveal .title-slide .quarto-title-authors {
+  color: $lt-teal;
+  font-size: 0.8em;
+  margin-top: 0.6em;
+}
+.reveal .title-slide .date {
+  color: $white;
+  font-size: 0.75em;
+  margin-top: 0.3em;
+}
+
+/* Headings */
+.reveal h2 {
+  color: $navy;
+  font-size: 1.15em;
+  font-weight: 800;
+  border-left: 5px solid $teal;
+  padding-left: 0.45em;
+  margin-bottom: 0.5em;
+}
+
+/* Body */
+.reveal p, .reveal li {
+  color: $navy;
+  font-size: 0.82em;
+  line-height: 1.5;
+}
+.reveal strong { color: $teal; }
+
+/* Callouts */
+.reveal .callout {
+  border-left: 4px solid $teal;
+  background-color: rgba(14, 116, 144, 0.08);
+  padding: 0.6em 1em;
+  border-radius: 4px;
+  margin-top: 0.8em;
+}
+.reveal .callout-important {
+  border-left: 4px solid $gold;
+  background-color: rgba(202, 138, 4, 0.08);
+}
+
+/* Tables */
+.reveal table {
+  font-size: 0.75em;
+  width: 100%;
+  border-collapse: collapse;
+}
+.reveal table th {
+  background-color: $navy;
+  color: $white;
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+.reveal table td {
+  padding: 0.3em 0.6em;
+  border-bottom: 1px solid #E2E8F0;
+  color: $navy;
+}
+.reveal table tr:nth-child(even) td {
+  background-color: #F0F4F8;
+}
+
+/* Footer & slide numbers */
+.reveal .footer {
+  font-size: 0.55em;
+  color: $slate-l;
+}
+.reveal .slide-number {
+  background-color: $teal;
+  color: $white;
+  font-size: 0.55em;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Code */
+.reveal pre code {
+  font-size: 0.7em;
+  border-left: 3px solid $teal;
+}
+
+/* Images */
+.reveal img {
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Columns */
+.reveal .columns { gap: 2em; }
+
+/* FINAL SLIDES */
+
+.reveal .center-middle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  flex-direction: column;
+}
+
+.reveal .thankyou {
+  font-size: 4em;
+  font-weight: 900;
+}
+
+.reveal .questions {
+  font-size: 2.5em;
+  font-weight: 800;
+}
+
+.reveal .contact {
+  text-align: center;
+  font-size: 1em;
+}

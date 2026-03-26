@@ -1,0 +1,505 @@
+---
+title: "Financial Dependence and Healthcare Utilization among Older Adults"
+subtitle: "Evidence from the Longitudinal Ageing Study in India (LASI) Wave 1, 2017–18"
+author:
+  - name: Ramesh Beniwal
+    affiliations:
+      - name: Azim Premji University, Bhopal
+  - name: Ram Krishna
+    affiliations:
+      - name: Azim Premji University, Bhopal
+date: today
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    slide-number: true
+    transition: fade
+    background-transition: fade
+    incremental: false
+    width: 1280
+    height: 720
+    margin: 0.06
+    fig-align: center
+    echo: false
+    embed-resources: true
+    footer: "Student Project Conclave 2026 | Azim Premji University, Bhopal"
+    title-slide-attributes:
+      data-background-color: "#0D2240"
+  pptx:
+    slide-level: 2
+execute:
+  warning: false
+  message: false
+  echo: false
+editor:
+  markdown:
+    wrap: sentence
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(haven)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(stargazer)
+
+HH_FI <- read_dta("HH_FI.dta")
+
+HH_FI <- HH_FI |>
+  mutate(across(where(haven::is.labelled), as.numeric)) |>
+  mutate(
+    gender_label    = factor(sex, levels = c(0, 1), labels = c("Female", "Male")),
+    zone_label      = factor(zone),
+    residence_label = factor(residence_type, levels = c(0, 1), labels = c("Urban", "Rural")),
+    class_caste     = case_when(
+      caste_social_group == 4             ~ "Upper Caste",
+      caste_social_group %in% c(1, 2, 3) ~ "Lower Caste",
+      TRUE                                ~ NA_character_
+    )
+  )
+
+pub_theme <- theme_minimal(base_size = 14) +
+  theme(
+    plot.title       = element_text(size = 16, face = "bold", hjust = 0.5, margin = margin(b = 8)),
+    plot.subtitle    = element_text(size = 12, hjust = 0.5, color = "grey40", margin = margin(b = 10)),
+    plot.caption     = element_text(size = 9, color = "grey55", hjust = 0, margin = margin(t = 10)),
+    axis.title       = element_text(size = 13, face = "bold"),
+    axis.text        = element_text(size = 12),
+    legend.title     = element_text(size = 13, face = "bold"),
+    legend.text      = element_text(size = 12),
+    legend.position  = "bottom",
+    strip.text       = element_text(size = 13, face = "bold"),
+    strip.background = element_rect(fill = "#f0f4f8", color = "grey75"),
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_blank(),
+    panel.spacing    = unit(1.5, "lines"),
+    plot.margin      = margin(10, 10, 10, 10)
+  )
+theme_set(pub_theme)
+
+gender_colors    <- c("Female" = "#e05c5c", "Male" = "#3a7abf")
+insurance_colors <- c("No Insurance" = "#e05c5c", "Insured" = "#3a7abf")
+pension_colors   <- c("No Pension" = "#e09a3a", "Pension" = "#3a7abf")
+```
+
+
+## Motivation 
+
+:::: {.columns}
+
+::: {.column width="50%"}
+****
+
+- 
+- 
+- 
+:::
+
+::: {.column width="50%"}
+****
+
+- 
+- 
+- 
+- 
+:::
+
+::::
+
+::: {.callout-note}
+## Research Question
+Do financial protection mechanisms — MPCE Quintile, health insurance, pension, family support — increase healthcare utilization among older adults in India?
+:::
+
+
+## Data Source: LASI Wave 1, 2017–18 
+:::: {.columns}
+
+::: {.column width="60%"}
+**Longitudinal Ageing Study in India (LASI)**
+- This study has used Wave 1 of the Longitudinal Ageing Study in India (LASI), conducted in 2017–18. This study has covered adults aged 45 to 100 across all Indian states and union territories.The analysis uses the individual-level and household-level dataset.
+
+
+
+**Dependent Variables**
+
+| Variable | Description |
+|----------|-------------|
+| Healthcare | Any facility visit (past 12 months) |
+| Inpatient Hospitalization | Any hospital admission |
+
+:::
+
+::: {.column width="40%"}
+**Independent Variables**
+
+- Health Insurance Coverage
+- Pension Status
+- Financial Support from family/others
+- Monthly Per-capita Consumer Expenditure (MPCE) Quintiles
+
+**Controls**
+
+- Age, Sex, Residence type
+- Religion, Caste
+- **State Fixed Effects**
+:::
+
+::::
+
+
+## Figure 1: Healthcare Visit by MPCE Quintile - Descriptive Analysis 
+
+```{r}
+#| label: fig1-healthcare-mpce
+#| fig-width: 10
+#| fig-height: 5
+#| fig-align: center
+
+HH_FI |>
+  filter(!is.na(mpce_quintile), !is.na(healthcare)) |>
+  mutate(MPCE = factor(mpce_quintile, levels = 1:5,
+                       labels = c("Poorest", "Poor", "Middle", "Rich", "Richest"))) |>
+  group_by(MPCE) |>
+  summarise(Visit = mean(healthcare, na.rm = TRUE) * 100, .groups = "drop") |>
+  ggplot(aes(x = MPCE, y = Visit, fill = MPCE)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = paste0(round(Visit, 1), "%")), vjust = -0.5, size = 5, fontface = "bold") +
+  scale_fill_brewer(palette = "Blues") +
+  scale_y_continuous(limits = c(0, 100), labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Healthcare Visit by Economic Status (MPCE Quintile)",
+       x = "MPCE Quintile", y = "% Visited Any Healthcare Facility",
+       caption = "Source: LASI Wave 1, 2017–18.") +
+  theme(legend.position = "none")
+```
+
+## Figure 2: Healthcare Visit by Caste Class- Descriptive Analysis
+
+```{r}
+#| label: fig2-healthcare-caste
+#| fig-width: 8
+#| fig-height: 5
+#| fig-align: center
+
+HH_FI |>
+  filter(!is.na(class_caste), !is.na(healthcare)) |>
+  mutate(Caste = factor(class_caste, levels = c("Lower Caste", "Upper Caste"))) |>
+  group_by(Caste) |>
+  summarise(Visit = mean(healthcare, na.rm = TRUE) * 100, .groups = "drop") |>
+  ggplot(aes(x = Caste, y = Visit, fill = Caste)) +
+  geom_col(width = 0.5) +
+  geom_text(aes(label = paste0(round(Visit, 1), "%")), vjust = -0.5, size = 6, fontface = "bold") +
+  scale_fill_manual(values = c("Lower Caste" = "#E69F00", "Upper Caste" = "#56B4E9")) +
+  scale_y_continuous(limits = c(0, 100), labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Healthcare Visit by Caste Class",
+       x = "Caste Class", y = "% Visited Any Healthcare Facility",
+       caption = "Source: LASI Wave 1, 2017–18.") +
+  theme(legend.position = "none")
+```
+
+## Figure 3: Healthcare Visit by MPCE Quintile & Caste- Descriptive Analysis
+
+```{r}
+#| label: fig3-healthcare-mpce-caste
+#| fig-width: 11
+#| fig-height: 5
+#| fig-align: center
+
+HH_FI |>
+  filter(!is.na(class_caste), !is.na(mpce_quintile), !is.na(healthcare)) |>
+  mutate(
+    Caste = factor(class_caste, levels = c("Lower Caste", "Upper Caste")),
+    MPCE  = factor(mpce_quintile, levels = 1:5,
+                   labels = c("Poorest", "Poor", "Middle", "Rich", "Richest"))
+  ) |>
+  group_by(MPCE, Caste) |>
+  summarise(Visit = mean(healthcare, na.rm = TRUE) * 100, .groups = "drop") |>
+  ggplot(aes(x = MPCE, y = Visit, fill = Caste)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_text(aes(label = paste0(round(Visit, 1), "%")),
+            position = position_dodge(width = 0.7),
+            vjust = -0.5, size = 4, fontface = "bold") +
+  scale_fill_manual(values = c("Lower Caste" = "#E69F00", "Upper Caste" = "#56B4E9")) +
+  scale_y_continuous(limits = c(0, 100), labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Healthcare Visit by Economic Status and Caste Class",
+       x = "MPCE Quintile", y = "% Visited Any Healthcare Facility", fill = "Caste Class",
+       caption = "Source: LASI Wave 1, 2017–18.")
+```
+
+## Figure 4: Healthcare Utilization & Financial Protection by Gender - Descriptive Analysis
+
+```{r}
+#| label: fig4-descriptive-gender
+#| fig-width: 12
+#| fig-height: 5
+#| fig-align: center
+
+HH_FI |>
+  filter(!is.na(sex)) |>
+  mutate(Gender = factor(sex, 0:1, c("Female", "Male"))) |>
+  group_by(Gender) |>
+  summarise(
+    `Any Healthcare\nVisit`      = mean(healthcare,               na.rm = TRUE) * 100,
+    `Inpatient\nHospitalization` = mean(inpatient_hospitalization, na.rm = TRUE) * 100,
+    `Health Insurance\nCoverage` = mean(health_insurance_covered,  na.rm = TRUE) * 100,
+    `Pension\nReceipt`           = mean(pension_status,            na.rm = TRUE) * 100,
+    `Financial\nSupport`         = mean(financial_support,         na.rm = TRUE) * 100,
+    .groups = "drop"
+  ) |>
+  pivot_longer(cols = -Gender, names_to = "Measure", values_to = "Value") |>
+  mutate(
+    Category = case_when(
+      Measure %in% c("Any Healthcare\nVisit", "Inpatient\nHospitalization") ~ "Healthcare Utilization",
+      TRUE ~ "Financial Protection"
+    ),
+    Category = factor(Category, levels = c("Healthcare Utilization", "Financial Protection")),
+    Measure  = factor(Measure, levels = c(
+      "Any Healthcare\nVisit", "Inpatient\nHospitalization",
+      "Health Insurance\nCoverage", "Pension\nReceipt", "Financial\nSupport"
+    ))
+  ) |>
+  ggplot(aes(x = Measure, y = Value, fill = Gender)) +
+  geom_col(position = position_dodge(width = 0.65), width = 0.55, color = "white", linewidth = 0.4) +
+  geom_text(aes(label = paste0(round(Value, 1), "%")),
+            position = position_dodge(width = 0.65), vjust = -0.5, size = 3.5, fontface = "bold") +
+  facet_wrap(~Category, scales = "free_x", nrow = 1) +
+  scale_fill_manual(values = gender_colors) +
+  scale_y_continuous(limits = c(0, 90), labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Healthcare Utilization and Financial Protection by Gender",
+       x = NULL, y = "Rate (%)", fill = "Gender",
+       caption = "Source: LASI Wave 1, 2017–18.")
+```
+
+## Figure 5: How Age Shapes the Insurance Effect - Discriptive Analysis
+
+```{r}
+#| label: fig5-age-insurance
+#| fig-width: 12
+#| fig-height: 5
+#| fig-align: center
+
+HH_FI |>
+  filter(!is.na(age), !is.na(sex),
+         !is.na(health_insurance_covered), !is.na(inpatient_hospitalization)) |>
+  mutate(
+    Age_Group = cut(age, c(44, 54, 64, 74, 100), labels = c("45–54", "55–64", "65–74", "75+")),
+    Gender    = factor(sex, 0:1, c("Female", "Male")),
+    Insurance = factor(health_insurance_covered, 0:1, c("No Insurance", "Insured"))
+  ) |>
+  filter(!is.na(Age_Group)) |>
+  group_by(Age_Group, Gender, Insurance) |>
+  summarise(Hosp = mean(inpatient_hospitalization, na.rm = TRUE) * 100, .groups = "drop") |>
+  ggplot(aes(x = Age_Group, y = Hosp, color = Insurance, group = Insurance, shape = Insurance)) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 5) +
+  geom_text(aes(label = paste0(round(Hosp, 1), "%")),
+            vjust = -0.9, size = 3.5, fontface = "bold", show.legend = FALSE) +
+  facet_wrap(~Gender, nrow = 1) +
+  scale_color_manual(values = insurance_colors) +
+  scale_shape_manual(values = c("No Insurance" = 16, "Insured" = 17)) +
+  scale_y_continuous(limits = c(0, 18), labels = function(x) paste0(x, "%")) +
+  labs(title = "How Age Shapes the Insurance Effect on Inpatient Hospitalization",
+       x = "Age Group", y = "% Hospitalized",
+       color = "Insurance Status", shape = "Insurance Status",
+       caption = "Source: LASI Wave 1, 2017–18.")
+```
+
+## Figure 6: Pension Receipt & Hospitalization by Residence - Descriptive Analysis
+
+```{r}
+#| label: fig6-pension-outcomes
+#| fig-width: 12
+#| fig-height: 5
+#| fig-align: center
+
+HH_FI |>
+  filter(!is.na(age), !is.na(residence_type),
+         !is.na(pension_status), !is.na(inpatient_hospitalization)) |>
+  mutate(
+    Age_Group = cut(age, c(44, 54, 64, 74, 100), labels = c("45–54", "55–64", "65–74", "75+")),
+    Residence = factor(residence_type, 0:1, c("Urban", "Rural")),
+    Pension   = factor(pension_status, 0:1, c("No Pension", "Pension"))
+  ) |>
+  filter(!is.na(Age_Group)) |>
+  group_by(Age_Group, Residence, Pension) |>
+  summarise(Hosp = mean(inpatient_hospitalization, na.rm = TRUE) * 100, .groups = "drop") |>
+  ggplot(aes(x = Age_Group, y = Hosp, color = Pension, group = Pension, shape = Pension)) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 5) +
+  geom_text(aes(label = paste0(round(Hosp, 1), "%")),
+            vjust = -0.9, size = 3.5, fontface = "bold", show.legend = FALSE) +
+  facet_wrap(~Residence, nrow = 1) +
+  scale_color_manual(values = pension_colors) +
+  scale_shape_manual(values = c("No Pension" = 16, "Pension" = 17)) +
+  scale_y_continuous(limits = c(0, 18), labels = function(x) paste0(x, "%")) +
+  labs(title = "Pension Receipt and Inpatient Hospitalization by Age Group and Residence",
+       subtitle = "Adults aged 45+ | LASI Wave 1, 2017–18",
+       x = "Age Group", y = "% Hospitalized",
+       color = "Pension Status", shape = "Pension Status",
+       caption = "Source: LASI Wave 1, 2017–18.")
+```
+
+## Regression Analysis {background-color="#0D2240" .center}
+
+## Regression 1: Healthcare Utilization and Insurance Coverage
+
+```{r}
+#| label: reg1-insurance
+#| results: asis
+
+hc_ins_1 <- lm(healthcare ~ health_insurance_covered + factor(state_id), data = HH_FI)
+hc_ins_2 <- lm(healthcare ~ health_insurance_covered +
+                  age + sex + residence_type +
+                  factor(religion) + factor(caste_social_group) +
+                  factor(marital_status) + factor(state_id), data = HH_FI)
+ip_ins_1 <- lm(inpatient_hospitalization ~ health_insurance_covered + factor(state_id), data = HH_FI)
+ip_ins_2 <- lm(inpatient_hospitalization ~ health_insurance_covered +
+                  age + sex + residence_type +
+                  factor(religion) + factor(caste_social_group) +
+                  factor(marital_status) + factor(state_id), data = HH_FI)
+
+stargazer(hc_ins_1, hc_ins_2, ip_ins_1, ip_ins_2,
+          type            = "html",
+          keep            = "health_insurance_covered",
+          omit.stat       = c("f", "ser", "adj.rsq"),
+          column.labels   = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
+          dep.var.caption = "",
+          add.lines       = list(
+            c("Controls", "No", "Yes", "No", "Yes"),
+            c("State FE",  "Yes", "Yes", "Yes", "Yes")
+          ),
+          title           = "Effect of Health Insurance on Healthcare Utilization",
+          table.attr      = 'style="width:90%; margin:auto; font-size:0.88em;"',
+          header          = FALSE)
+```
+
+## Regression 2: Healthcare Utilization and Pension Receipt
+
+```{r}
+#| label: reg2-pension
+#| results: asis
+
+hc_pen_1 <- lm(healthcare ~ pension_status + factor(state_id), data = HH_FI)
+hc_pen_2 <- lm(healthcare ~ pension_status +
+                  age + sex + residence_type +
+                  factor(religion) + factor(caste_social_group) +
+                  factor(marital_status) + factor(state_id), data = HH_FI)
+ip_pen_1 <- lm(inpatient_hospitalization ~ pension_status + factor(state_id), data = HH_FI)
+ip_pen_2 <- lm(inpatient_hospitalization ~ pension_status +
+                  age + sex + residence_type +
+                  factor(religion) + factor(caste_social_group) +
+                  factor(marital_status) + factor(state_id), data = HH_FI)
+
+stargazer(hc_pen_1, hc_pen_2, ip_pen_1, ip_pen_2,
+          type            = "html",
+          keep            = "pension_status",
+          omit.stat       = c("f", "ser", "adj.rsq"),
+          column.labels   = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
+          dep.var.caption = "",
+          add.lines       = list(
+            c("Controls", "No", "Yes", "No", "Yes"),
+            c("State FE",  "Yes", "Yes", "Yes", "Yes")
+          ),
+          title           = "Effect of Pension Status on Healthcare Utilization",
+          table.attr      = 'style="width:90%; margin:auto; font-size:0.88em;"',
+          header          = FALSE)
+```
+
+## Regression 3: Healthcare Utilization and Financial Support
+
+```{r}
+#| label: reg3-financial
+#| results: asis
+
+hc_fin_1 <- lm(healthcare ~ financial_support + factor(state_id), data = HH_FI)
+hc_fin_2 <- lm(healthcare ~ financial_support +
+                  age + sex + residence_type +
+                  factor(religion) + factor(caste_social_group) +
+                  factor(marital_status) + factor(state_id), data = HH_FI)
+ip_fin_1 <- lm(inpatient_hospitalization ~ financial_support + factor(state_id), data = HH_FI)
+ip_fin_2 <- lm(inpatient_hospitalization ~ financial_support +
+                  age + sex + residence_type +
+                  factor(religion) + factor(caste_social_group) +
+                  factor(marital_status) + factor(state_id), data = HH_FI)
+
+stargazer(hc_fin_1, hc_fin_2, ip_fin_1, ip_fin_2,
+          type            = "html",
+          keep            = "financial_support",
+          omit.stat       = c("f", "ser", "adj.rsq"),
+          column.labels   = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
+          dep.var.caption = "",
+          add.lines       = list(
+            c("Controls", "No", "Yes", "No", "Yes"),
+            c("State FE",  "Yes", "Yes", "Yes", "Yes")
+          ),
+          title           = "Effect of Financial Support on Healthcare Utilization",
+          table.attr      = 'style="width:90%; margin:auto; font-size:0.88em;"',
+          header          = FALSE)
+```
+
+
+## Key Findings
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Economic & Social Gradients**
+
+1. Higher MPCE quintile → higher healthcare utilization
+2. Caste-based inequalities persist in access
+3. Women visit more but have far less formal financial protection
+:::
+
+::: {.column width="50%"}
+**Financial Protection Mechanisms**
+
+4. Insurance matters most for the **oldest (75+)** and most vulnerable
+5. Pension income strongly **enables hospital care**, especially in rural areas
+:::
+
+::::
+
+::: {.callout-important}
+## Policy Implication
+write here 
+:::
+
+## {.center-middle}
+
+<div class="thankyou">
+Thank You
+</div>
+
+---
+
+## {.center-middle}
+
+<div class="questions">
+Questions & Discussion
+</div>
+
+<br><br>
+
+<div class="contact">
+
+**Ramesh Beniwal **  
+ramesh.beniwal24_ug@apu.edu.in  
+
+<br>
+
+**Ram Krishna**  
+ram.krishna24_ug@apu.edu.in  
+
+</div>
+
+
+
+
+
