@@ -5,9 +5,6 @@ author:
   - name: Ramesh Beniwal
     affiliations:
       - name: Azim Premji University, Bhopal
-  - name: Ram Krishna
-    affiliations:
-      - name: Azim Premji University, Bhopal
 date: today
 format:
   revealjs:
@@ -89,30 +86,71 @@ pension_colors   <- c("No Pension" = "#e09a3a", "Pension" = "#3a7abf")
 ## Motivation 
 
 :::: {.columns}
-
 ::: {.column width="50%"}
-****
-
-- 
-- 
-- 
+- India is undergoing a rapid demographic transition with a growing elderly population.(**45+ age**)
+- **Globally:**13.9% (1.1 billion) older persons in 2022. By 2050, expected to double to 2.1 billion.
+- **India:** 10.5% in 2021. By 2050, the share of older persons will double to 20.8% (347 million) (**UNFPA**)
+- **Population ageing is associated with:**
+- Higher prevalence of chronic diseases and disabilities
+- Increased demand for healthcare services and long-term care
 :::
 
 ::: {.column width="50%"}
-****
+```{r}
+#| label: fig
+#| fig-width: 10
+#| fig-height: 5
+#| fig-align: center
+library(tidyverse)
 
-- 
-- 
-- 
-- 
+# Create tibble with NFHS data
+older_persons_india <- tibble(
+  year = c(1992, 1998, 2005, 2015, 2021),
+  percentage = c(15.43, 15.88, 17.78, 22.04, 24.85)
+)
+
+older_persons_india %>%
+  ggplot(aes(x = year, y = percentage)) +
+  geom_line(size = 1.2, color = "#1f77b4") +
+  geom_point(size = 3, color = "#1f77b4") +
+  scale_x_continuous(breaks = c(1992, 1998, 2005, 2015, 2021)) +
+  labs(
+    title = "Percentage of Older Persons in India (1992-2021)",
+    subtitle = "NFHS Rounds 1, 2, 3, 4, and 5",
+    x = "Year",
+    y = "Percentage (%)",
+    caption = "Source: NFHS 1, 2, 3, 4, 5"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "grey40"),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 11)
+  )
+```
 :::
-
 ::::
 
-::: {.callout-note}
-## Research Question
-Do financial protection mechanisms — MPCE Quintile, health insurance, pension, family support — increase healthcare utilization among older adults in India?
+
+## Motivation Contd...
+
+:::: {.columns}
+::: {.column width="100%"}
+
+- **Traditional family-based support systems are weakening:**
+- Decline in joint family structures and increasing migration
+- Rising risk of financial and social vulnerability among the elderly
+- **Healthcare needs of the elderly are high but utilization remains unequal:**
+- Access to healthcare is strongly influenced by socioeconomic status
+- **Financial constraints are a key barrier:**
+- Limited evidence on the combined role of insurance, pensions, and financial support
+- **Contribution of this paper:**
+- Examines how financial security affects healthcare-seeking behavior among the elderly
+- Provides policy insights for ageing and social protection in developing countries
 :::
+::::
+
 
 
 ## Data Source: LASI Wave 1, 2017–18 
@@ -120,7 +158,9 @@ Do financial protection mechanisms — MPCE Quintile, health insurance, pension,
 
 ::: {.column width="60%"}
 **Longitudinal Ageing Study in India (LASI)**
-- This study has used Wave 1 of the Longitudinal Ageing Study in India (LASI), conducted in 2017–18. This study has covered adults aged 45 to 100 across all Indian states and union territories.The analysis uses the individual-level and household-level dataset.
+- So this study uses the Longitudinal Ageing Study in India, Wave 1, conducted in 2017-18, NFHS(National Family Health Survey) and UNFPA (United Nations Population Fund). We used individual-level and household-level dataset from LASI for this study. This study has covered adults aged 45 to 100 across all Indian states and union territories.
+
+- LASI-World largest dataset on elderly population. 
 
 
 
@@ -277,79 +317,15 @@ HH_FI |>
        caption = "Source: LASI Wave 1, 2017–18.")
 ```
 
-## Figure 5: How Age Shapes the Insurance Effect - Discriptive Analysis
-
-```{r}
-#| label: fig5-age-insurance
-#| fig-width: 12
-#| fig-height: 5
-#| fig-align: center
-
-HH_FI |>
-  filter(!is.na(age), !is.na(sex),
-         !is.na(health_insurance_covered), !is.na(inpatient_hospitalization)) |>
-  mutate(
-    Age_Group = cut(age, c(44, 54, 64, 74, 100), labels = c("45–54", "55–64", "65–74", "75+")),
-    Gender    = factor(sex, 0:1, c("Female", "Male")),
-    Insurance = factor(health_insurance_covered, 0:1, c("No Insurance", "Insured"))
-  ) |>
-  filter(!is.na(Age_Group)) |>
-  group_by(Age_Group, Gender, Insurance) |>
-  summarise(Hosp = mean(inpatient_hospitalization, na.rm = TRUE) * 100, .groups = "drop") |>
-  ggplot(aes(x = Age_Group, y = Hosp, color = Insurance, group = Insurance, shape = Insurance)) +
-  geom_line(linewidth = 1.5) +
-  geom_point(size = 5) +
-  geom_text(aes(label = paste0(round(Hosp, 1), "%")),
-            vjust = -0.9, size = 3.5, fontface = "bold", show.legend = FALSE) +
-  facet_wrap(~Gender, nrow = 1) +
-  scale_color_manual(values = insurance_colors) +
-  scale_shape_manual(values = c("No Insurance" = 16, "Insured" = 17)) +
-  scale_y_continuous(limits = c(0, 18), labels = function(x) paste0(x, "%")) +
-  labs(title = "How Age Shapes the Insurance Effect on Inpatient Hospitalization",
-       x = "Age Group", y = "% Hospitalized",
-       color = "Insurance Status", shape = "Insurance Status",
-       caption = "Source: LASI Wave 1, 2017–18.")
-```
-
-## Figure 6: Pension Receipt & Hospitalization by Residence - Descriptive Analysis
-
-```{r}
-#| label: fig6-pension-outcomes
-#| fig-width: 12
-#| fig-height: 5
-#| fig-align: center
-
-HH_FI |>
-  filter(!is.na(age), !is.na(residence_type),
-         !is.na(pension_status), !is.na(inpatient_hospitalization)) |>
-  mutate(
-    Age_Group = cut(age, c(44, 54, 64, 74, 100), labels = c("45–54", "55–64", "65–74", "75+")),
-    Residence = factor(residence_type, 0:1, c("Urban", "Rural")),
-    Pension   = factor(pension_status, 0:1, c("No Pension", "Pension"))
-  ) |>
-  filter(!is.na(Age_Group)) |>
-  group_by(Age_Group, Residence, Pension) |>
-  summarise(Hosp = mean(inpatient_hospitalization, na.rm = TRUE) * 100, .groups = "drop") |>
-  ggplot(aes(x = Age_Group, y = Hosp, color = Pension, group = Pension, shape = Pension)) +
-  geom_line(linewidth = 1.5) +
-  geom_point(size = 5) +
-  geom_text(aes(label = paste0(round(Hosp, 1), "%")),
-            vjust = -0.9, size = 3.5, fontface = "bold", show.legend = FALSE) +
-  facet_wrap(~Residence, nrow = 1) +
-  scale_color_manual(values = pension_colors) +
-  scale_shape_manual(values = c("No Pension" = 16, "Pension" = 17)) +
-  scale_y_continuous(limits = c(0, 18), labels = function(x) paste0(x, "%")) +
-  labs(title = "Pension Receipt and Inpatient Hospitalization by Age Group and Residence",
-       subtitle = "Adults aged 45+ | LASI Wave 1, 2017–18",
-       x = "Age Group", y = "% Hospitalized",
-       color = "Pension Status", shape = "Pension Status",
-       caption = "Source: LASI Wave 1, 2017–18.")
-```
-
 ## Regression Analysis {background-color="#0D2240" .center}
 
-## Regression 1: Healthcare Utilization and Insurance Coverage
+[ We need regression to look at how correlation has been established. Now let's talk about numbers, magnitudes of relationships.]{style="color: white;"}
 
+[ By OLS.]{style="color: white;"}
+
+[ The variation of the state - controlled]{style="color: white;"}
+
+## Regression 1: Healthcare Utilization and Insurance Coverage
 ```{r}
 #| label: reg1-insurance
 #| results: asis
@@ -366,22 +342,23 @@ ip_ins_2 <- lm(inpatient_hospitalization ~ health_insurance_covered +
                   factor(marital_status) + factor(state_id), data = HH_FI)
 
 stargazer(hc_ins_1, hc_ins_2, ip_ins_1, ip_ins_2,
-          type            = "html",
-          keep            = "health_insurance_covered",
-          omit.stat       = c("f", "ser", "adj.rsq"),
-          column.labels   = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
-          dep.var.caption = "",
-          add.lines       = list(
+          type              = "html",
+          keep              = "health_insurance_covered",
+          omit.stat         = c("f", "ser", "adj.rsq", "rsq"),
+          column.labels     = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
+          dep.var.caption   = "",
+          add.lines         = list(
             c("Controls", "No", "Yes", "No", "Yes"),
             c("State FE",  "Yes", "Yes", "Yes", "Yes")
           ),
-          title           = "Effect of Health Insurance on Healthcare Utilization",
-          table.attr      = 'style="width:90%; margin:auto; font-size:0.88em;"',
-          header          = FALSE)
+          omit.table.layout = "n",
+          table.attr        = 'style="width:90%; margin:auto; font-size:0.88em;"',
+          header            = FALSE)
 ```
 
-## Regression 2: Healthcare Utilization and Pension Receipt
+*\*p<0.1; \*\*p<0.05; \*\*\*p<0.01*
 
+## Regression 2: Healthcare Utilization and Pension Receipt
 ```{r}
 #| label: reg2-pension
 #| results: asis
@@ -398,22 +375,23 @@ ip_pen_2 <- lm(inpatient_hospitalization ~ pension_status +
                   factor(marital_status) + factor(state_id), data = HH_FI)
 
 stargazer(hc_pen_1, hc_pen_2, ip_pen_1, ip_pen_2,
-          type            = "html",
-          keep            = "pension_status",
-          omit.stat       = c("f", "ser", "adj.rsq"),
-          column.labels   = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
-          dep.var.caption = "",
-          add.lines       = list(
+          type              = "html",
+          keep              = "pension_status",
+          omit.stat         = c("f", "ser", "adj.rsq", "rsq"),
+          column.labels     = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
+          dep.var.caption   = "",
+          add.lines         = list(
             c("Controls", "No", "Yes", "No", "Yes"),
             c("State FE",  "Yes", "Yes", "Yes", "Yes")
           ),
-          title           = "Effect of Pension Status on Healthcare Utilization",
-          table.attr      = 'style="width:90%; margin:auto; font-size:0.88em;"',
-          header          = FALSE)
+          omit.table.layout = "n",
+          table.attr        = 'style="width:90%; margin:auto; font-size:0.88em;"',
+          header            = FALSE)
 ```
 
-## Regression 3: Healthcare Utilization and Financial Support
+*\*p<0.1; \*\*p<0.05; \*\*\*p<0.01*
 
+## Regression 3: Healthcare Utilization and Financial Support
 ```{r}
 #| label: reg3-financial
 #| results: asis
@@ -430,46 +408,38 @@ ip_fin_2 <- lm(inpatient_hospitalization ~ financial_support +
                   factor(marital_status) + factor(state_id), data = HH_FI)
 
 stargazer(hc_fin_1, hc_fin_2, ip_fin_1, ip_fin_2,
-          type            = "html",
-          keep            = "financial_support",
-          omit.stat       = c("f", "ser", "adj.rsq"),
-          column.labels   = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
-          dep.var.caption = "",
-          add.lines       = list(
+          type              = "html",
+          keep              = "financial_support",
+          omit.stat         = c("f", "ser", "adj.rsq", "rsq"),
+          column.labels     = c("Healthcare", "Healthcare", "Inpatient", "Inpatient"),
+          dep.var.caption   = "",
+          add.lines         = list(
             c("Controls", "No", "Yes", "No", "Yes"),
             c("State FE",  "Yes", "Yes", "Yes", "Yes")
           ),
-          title           = "Effect of Financial Support on Healthcare Utilization",
-          table.attr      = 'style="width:90%; margin:auto; font-size:0.88em;"',
-          header          = FALSE)
+          omit.table.layout = "n",
+          table.attr        = 'style="width:90%; margin:auto; font-size:0.88em;"',
+          header            = FALSE)
 ```
 
+*\*p<0.1; \*\*p<0.05; \*\*\*p<0.01*
 
-## Key Findings
+
+## Conclusion
 
 :::: {.columns}
 
-::: {.column width="50%"}
-**Economic & Social Gradients**
-
+::: {.column width="100%"}
 1. Higher MPCE quintile → higher healthcare utilization
 2. Caste-based inequalities persist in access
 3. Women visit more but have far less formal financial protection
-:::
-
-::: {.column width="50%"}
-**Financial Protection Mechanisms**
-
 4. Insurance matters most for the **oldest (75+)** and most vulnerable
 5. Pension income strongly **enables hospital care**, especially in rural areas
+6. Addressing this now is critical — as India's older population grows, gaps in financial protection and healthcare access will create serious instability at both household and national level.
 :::
 
 ::::
 
-::: {.callout-important}
-## Policy Implication
-write here 
-:::
 
 ## {.center-middle}
 
